@@ -1,6 +1,7 @@
 package httpui
 
 import (
+	"context"
 	"net/http"
 	"strconv"
 	"textilepermit/internal/domain"
@@ -79,7 +80,7 @@ func (s *Server) CreateCase(w http.ResponseWriter, r *http.Request) {
 		badJSON(w, e)
 		return
 	}
-	v, e := s.service.CreateCase(r.Context(), in)
+	v, e := s.service.CreateCase(context.WithoutCancel(r.Context()), in)
 	if e != nil {
 		writeError(w, e)
 		return
@@ -100,7 +101,7 @@ func (s *Server) UpdateCase(w http.ResponseWriter, r *http.Request) {
 		badJSON(w, e)
 		return
 	}
-	v, e := s.service.UpdateCase(r.Context(), r.PathValue("caseID"), in)
+	v, e := s.service.UpdateCase(context.WithoutCancel(r.Context()), r.PathValue("caseID"), in)
 	if e != nil {
 		writeError(w, e)
 		return

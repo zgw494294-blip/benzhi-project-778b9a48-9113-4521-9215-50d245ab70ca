@@ -1,6 +1,7 @@
 package httpui
 
 import (
+	"context"
 	"net/http"
 	"strconv"
 	"textilepermit/internal/workflow"
@@ -12,7 +13,7 @@ func (s *Server) SubmitPlan(w http.ResponseWriter, r *http.Request) {
 		badJSON(w, e)
 		return
 	}
-	v, e := s.service.SubmitPlan(r.Context(), r.PathValue("caseID"), in)
+	v, e := s.service.SubmitPlan(context.WithoutCancel(r.Context()), r.PathValue("caseID"), in)
 	if e != nil {
 		writeError(w, e)
 		return
@@ -46,7 +47,7 @@ func (s *Server) ResolveRisk(w http.ResponseWriter, r *http.Request) {
 		badJSON(w, e)
 		return
 	}
-	v, e := s.service.ResolveRisk(r.Context(), r.PathValue("caseID"), r.PathValue("findingID"), in)
+	v, e := s.service.ResolveRisk(context.WithoutCancel(r.Context()), r.PathValue("caseID"), r.PathValue("findingID"), in)
 	if e != nil {
 		writeError(w, e)
 		return
@@ -59,7 +60,7 @@ func (s *Server) BatchResolveRisk(w http.ResponseWriter, r *http.Request) {
 		badJSON(w, e)
 		return
 	}
-	v, e := s.service.BatchResolveRisk(r.Context(), r.PathValue("caseID"), in)
+	v, e := s.service.BatchResolveRisk(context.WithoutCancel(r.Context()), r.PathValue("caseID"), in)
 	if e != nil {
 		writeError(w, e)
 		return
@@ -72,7 +73,7 @@ func (s *Server) RespondReview(w http.ResponseWriter, r *http.Request) {
 		badJSON(w, e)
 		return
 	}
-	v, e := s.service.RespondReview(r.Context(), r.PathValue("caseID"), in)
+	v, e := s.service.RespondReview(context.WithoutCancel(r.Context()), r.PathValue("caseID"), in)
 	if e != nil {
 		writeError(w, e)
 		return
@@ -85,7 +86,7 @@ func (s *Server) SubmitReview(w http.ResponseWriter, r *http.Request) {
 		badJSON(w, e)
 		return
 	}
-	v, e := s.service.SubmitReview(r.Context(), r.PathValue("caseID"), in)
+	v, e := s.service.SubmitReview(context.WithoutCancel(r.Context()), r.PathValue("caseID"), in)
 	if e != nil {
 		writeError(w, e)
 		return
@@ -98,7 +99,7 @@ func (s *Server) Review(w http.ResponseWriter, r *http.Request) {
 		badJSON(w, e)
 		return
 	}
-	v, e := s.service.Review(r.Context(), r.PathValue("caseID"), in)
+	v, e := s.service.Review(context.WithoutCancel(r.Context()), r.PathValue("caseID"), in)
 	if e != nil {
 		writeError(w, e)
 		return
