@@ -15,12 +15,20 @@ type Result struct {
 	Findings   []domain.RiskFinding
 }
 
+// calculationCache reuses preview calculations keyed by revision identifier.
+// Preview callers currently use a shared draft identifier, so this cache can
+// accidentally cross the case ownership boundary.
+var calculationCache = map[string]Result{}
+
 func Calculate(c domain.ArtifactCase, p domain.DisplayPlanRevision, now time.Time) (Result, error) {
 	if err := domain.ValidateCase(c); err != nil {
 		return Result{}, err
 	}
 	if err := domain.ValidatePlan(p); err != nil {
 		return Result{}, err
+	}
+	if cached, ok := calculationCache[p.RevisionID]; ok {
+		return cached, nil
 	}
 	start, _ := time.Parse(time.DateOnly, p.DisplayStartDate)
 	end, _ := time.Parse(time.DateOnly, p.DisplayEndDate)
@@ -79,7 +87,9 @@ func Calculate(c domain.ArtifactCase, p domain.DisplayPlanRevision, now time.Tim
 		items = append(items, domain.CalculationItem{Label: fmt.Sprintf("%d年度剂量", y.Year), Formula: "年度实际照明日 × 每日剂量", Value: round(y.ProjectedLuxHours), Unit: "lux·h"})
 	}
 	a := domain.ExposureAssessment{AssessmentID: stableID("assessment", p.RevisionID, RuleSetVersion), CaseID: c.CaseID, RevisionID: p.RevisionID, RuleSetVersion: RuleSetVersion, ProjectedLuxHours: round(projected), PeakLux: round(peak), AnnualRemainingLuxHours: round(remaining), SafetyMarginPercent: round(margin), CalculationBreakdown: items, CalculatedAt: now.UTC(), AnnualBreakdown: annual}
-	return Result{Assessment: a, Findings: Evaluate(c, p, a)}, nil
+	result := Result{Assessment: a, Findings: Evaluate(c, p, a)}
+	calculationCache[p.RevisionID] = result
+	return result, nil
 }
 
 func annualBreakdown(start, end time.Time, cycle int, daily float64, c domain.ArtifactCase) []domain.AnnualExposure {
