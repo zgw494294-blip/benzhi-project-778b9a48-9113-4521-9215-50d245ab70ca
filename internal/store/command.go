@@ -17,13 +17,8 @@ func (s *Store) Command(ctx context.Context, key, operation, caseID, actor strin
 	if key == "" {
 		return nil, false, errors.New("idempotencyKey 不能为空")
 	}
-	tx, err := s.db.BeginTx(ctx, nil)
-	if err != nil {
-		return nil, false, err
-	}
-	defer tx.Rollback()
 	var saved, savedOperation string
-	err = tx.QueryRowContext(ctx, "SELECT operation,response FROM idempotency WHERE idempotency_key=?", key).Scan(&savedOperation, &saved)
+	err := s.db.QueryRowContext(ctx, "SELECT operation,response FROM idempotency WHERE idempotency_key=?", key).Scan(&savedOperation, &saved)
 	if err == nil {
 		if savedOperation != operation {
 			return nil, false, errors.New("idempotencyKey 已被其他操作使用")
@@ -33,6 +28,11 @@ func (s *Store) Command(ctx context.Context, key, operation, caseID, actor strin
 	if !errors.Is(err, sql.ErrNoRows) {
 		return nil, false, err
 	}
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, false, err
+	}
+	defer tx.Rollback()
 	ct := &CommandTx{tx: tx, now: time.Now().UTC()}
 	value, err := fn(ct)
 	if err != nil {
