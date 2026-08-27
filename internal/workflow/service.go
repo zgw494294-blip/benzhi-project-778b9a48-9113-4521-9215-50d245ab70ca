@@ -5,13 +5,20 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"sync"
 	"textilepermit/internal/domain"
 	"textilepermit/internal/store"
 )
 
-type Service struct{ store *store.Store }
+type Service struct {
+	store         *store.Store
+	evidenceMu    sync.RWMutex
+	evidenceCache map[string]domain.EvidenceView
+}
 
-func New(s *store.Store) *Service { return &Service{store: s} }
+func New(s *store.Store) *Service {
+	return &Service{store: s, evidenceCache: make(map[string]domain.EvidenceView)}
+}
 
 func decodeResult[T any](raw json.RawMessage) (T, error) {
 	var v T
@@ -20,10 +27,28 @@ func decodeResult[T any](raw json.RawMessage) (T, error) {
 }
 func (s *Service) command(ctx context.Context, key, op, caseID, actor string, fn func(*store.CommandTx) (any, error)) (json.RawMessage, error) {
 	raw, _, err := s.store.Command(ctx, key, op, caseID, actor, fn)
+	if err == nil && caseID != "" {
+		s.evidenceMu.Lock()
+		delete(s.evidenceCache, caseID)
+		s.evidenceMu.Unlock()
+	}
 	return raw, err
 }
 func (s *Service) Evidence(ctx context.Context, id string) (domain.EvidenceView, error) {
-	return s.store.Evidence(ctx, id)
+	s.evidenceMu.RLock()
+	cached, ok := s.evidenceCache[id]
+	s.evidenceMu.RUnlock()
+	if ok {
+		return cached, nil
+	}
+	view, err := s.store.Evidence(ctx, id)
+	if err != nil {
+		return domain.EvidenceView{}, err
+	}
+	s.evidenceMu.Lock()
+	s.evidenceCache[id] = view
+	s.evidenceMu.Unlock()
+	return view, nil
 }
 func (s *Service) Cases(ctx context.Context) ([]domain.ArtifactCase, error) {
 	return s.store.ListCases(ctx)
