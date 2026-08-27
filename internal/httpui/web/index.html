@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>纺织藏品展陈光照放行台</title>
+  <link rel="stylesheet" href="/assets/app.css">
+</head>
+<body>
+  <header><div><span class="eyebrow">COLLECTION CARE · LIGHT CONTROL</span><h1>纺织藏品展陈<br>光照放行台</h1><p>把每一次照明选择，变成可解释、可复核、可验真的保护证据。</p></div><div id="health" class="health">连接中</div></header>
+  <main>
+    <aside><button class="brand" data-view="cases">案卷总览</button><nav><button data-view="create">01 建立藏品档案</button><button data-view="plan">02 编制与测算方案</button><button data-view="risks">03 风险整改</button><button data-view="review">04 专业复核与冻结</button><button data-view="verify">05 凭据验真</button><button data-view="audit">06 审计时间线</button></nav><label>当前案卷<select id="case-picker"><option value="">请选择</option></select></label></aside>
+    <section class="content">
+      <div id="notice" role="status"></div>
+      <article id="cases" class="view active"><div class="section-title"><div><span>OVERVIEW</span><h2>审查案卷</h2></div><button data-view="create">新建案卷</button></div><div id="case-list" class="cards"></div></article>
+      <article id="create" class="view"><div class="section-title"><div><span>ARCHIVE</span><h2>建立藏品档案</h2></div></div><form id="case-form" class="grid"><label>藏品编号<input name="accessionCode" required value="TEX-2026-"></label><label>藏品名称<input name="title" required></label><label class="wide">材质构成<textarea name="materialProfile" required placeholder="例如：丝地、植物染料、金属线"></textarea></label><label>染料敏感性<select name="dyeSensitivity"><option value="high">高敏</option><option value="medium">中敏</option><option value="low">低敏</option></select></label><label>脆弱部位<textarea name="fragileAreas" required></textarea></label><label>历史曝光量（lux·h）<input name="historicalLuxHours" type="number" min="0" value="0"></label><label>年度剂量上限（lux·h）<input name="annualLuxHourLimit" type="number" min="1" value="15000"></label><label>建档人<input name="actor" required value="protector-a"></label><button type="submit">保存档案</button></form></article>
+      <article id="plan" class="view"><div class="section-title"><div><span>ASSESSMENT</span><h2>编制与测算方案</h2></div></div><p class="hint">提交后立即生成不可变修订、计算快照和风险发现。</p><form id="plan-form" class="grid"><label>展柜编号<input name="cabinetCode" required value="C-12"></label><div class="wide" id="lighting-slots"><div class="slot-row"><input name="slotName" placeholder="时段名称" required value="开放时段"><input name="lux" type="number" min="1" placeholder="照度 lux" value="45"><input name="slotMinutes" type="number" min="1" placeholder="分钟" value="480"><button type="button" class="remove-slot" title="删除时段">删除</button></div></div><button type="button" id="add-slot">新增照明时段</button><label>每日开放分钟<input name="dailyOpenMinutes" type="number" min="1" value="480"></label><label>展期开始<input name="displayStartDate" type="date" required></label><label>展期结束<input name="displayEndDate" type="date" required></label><label>每照明日后休息天数<input name="restRotationDays" type="number" min="0" value="1"></label><label class="check"><input name="uvProtection" type="checkbox" checked> 已落实紫外防护</label><label>提交人<input name="actor" required value="designer-b"></label><button type="submit">提交修订并测算</button></form><div id="assessment"></div></article>
+      <article id="risks" class="view"><div class="section-title"><div><span>REMEDIATION</span><h2>风险整改</h2></div></div><p class="hint">逐项登记措施与佐证；参数类风险应在整改后创建新方案修订并重新测算。</p><div id="risk-list"></div></article>
+      <article id="review" class="view"><div class="section-title"><div><span>REVIEW & FREEZE</span><h2>专业复核与证据冻结</h2></div></div><div id="review-evidence"></div><form id="review-form" class="grid"><label>复核负责人<input name="reviewerId" value="reviewer-c" required></label><label>决定<select name="outcome"><option value="approved">批准并签发凭据</option><option value="returned">退回整改</option></select></label><label class="wide">决定理由<textarea name="reason" placeholder="退回时必填；批准时可记录专业判断"></textarea></label><label>凭据有效天数<input name="validDays" type="number" min="1" max="365" value="90"></label><button type="button" id="submit-review">送交复核</button><button type="submit">提交复核决定</button></form><div id="permit-result"></div></article>
+      <article id="verify" class="view"><div class="section-title"><div><span>PUBLIC CHECK</span><h2>放行凭据验真</h2></div></div><form id="verify-form" class="inline"><input name="code" placeholder="输入校验码" required><button type="submit">立即验真</button></form><div id="verification"></div></article>
+      <article id="audit" class="view"><div class="section-title"><div><span>TRACE</span><h2>连续审计时间线</h2></div></div><ol id="timeline"></ol></article>
+    </section>
+  </main>
+  <footer>纺织藏品展陈光照放行台 · 本地证据闭环</footer>
+  <script src="/assets/app.js" defer></script>
+</body>
+</html>
