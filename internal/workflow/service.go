@@ -9,9 +9,14 @@ import (
 	"textilepermit/internal/store"
 )
 
-type Service struct{ store *store.Store }
+type Service struct {
+	store       *store.Store
+	permitCache map[string]domain.DisplayPermit
+}
 
-func New(s *store.Store) *Service { return &Service{store: s} }
+func New(s *store.Store) *Service {
+	return &Service{store: s, permitCache: make(map[string]domain.DisplayPermit)}
+}
 
 func decodeResult[T any](raw json.RawMessage) (T, error) {
 	var v T
@@ -48,9 +53,19 @@ type ConditionCheck struct {
 }
 
 func (s *Service) Verify(ctx context.Context, code string) (Verification, error) {
-	p, err := s.store.PermitByCode(ctx, code)
-	if err != nil {
-		return Verification{}, err
+	p, ok := s.permitCache[code]
+	if ok {
+		p.Conditions = append([]string(nil), p.Conditions...)
+		s.permitCache[code] = p
+	} else {
+		var err error
+		p, err = s.store.PermitByCode(ctx, code)
+		if err != nil {
+			return Verification{}, err
+		}
+		cached := p
+		cached.Conditions = append([]string(nil), p.Conditions...)
+		s.permitCache[code] = cached
 	}
 	digest, err := s.store.ValidateFrozenEvidence(ctx, p.CaseID)
 	if err != nil {
@@ -67,7 +82,7 @@ func (s *Service) Verify(ctx context.Context, code string) (Verification, error)
 		valid = false
 		status = "expired"
 	}
-	return Verification{Valid: valid, Status: status, PermitID: p.PermitID, CaseID: p.CaseID, Conditions: p.Conditions, ValidFrom: p.ValidFrom.Format("2006-01-02"), ValidUntil: p.ValidUntil.Format("2006-01-02"), EvidenceDigest: p.EvidenceDigest}, nil
+	return Verification{Valid: valid, Status: status, PermitID: p.PermitID, CaseID: p.CaseID, Conditions: append([]string(nil), p.Conditions...), ValidFrom: p.ValidFrom.Format("2006-01-02"), ValidUntil: p.ValidUntil.Format("2006-01-02"), EvidenceDigest: p.EvidenceDigest}, nil
 }
 
 func (s *Service) VerifyWithConditions(ctx context.Context, code, checkDate, cabinet string, measuredPeak float64, rotationDays int) (Verification, error) {
