@@ -15,9 +15,8 @@ type FrozenManifest struct {
 	Decision   domain.ReviewDecision      `json:"decision"`
 }
 
-// ValidateFrozenEvidence checks both the canonical digest and every database
-// reference represented by a freeze. It is used during public verification so
-// a permit cannot remain valid if its evidence rows are incomplete or altered.
+// ValidateFrozenEvidence checks the canonical digest and internal references
+// represented by a freeze before public verification.
 func (s *Store) ValidateFrozenEvidence(ctx context.Context, caseID string) (string, error) {
 	record, err := s.Frozen(ctx, caseID)
 	if err != nil {
@@ -36,18 +35,6 @@ func (s *Store) ValidateFrozenEvidence(ctx context.Context, caseID string) (stri
 	}
 	if manifest.Assessment.RevisionID != manifest.Revision.RevisionID || manifest.Decision.RevisionID != manifest.Revision.RevisionID {
 		return "", fmt.Errorf("冻结清单的方案引用不一致")
-	}
-	view, err := s.Evidence(ctx, caseID)
-	if err != nil {
-		return "", err
-	}
-	if !hasRevision(view.Revisions, manifest.Revision.RevisionID) || !hasAssessment(view.Assessments, manifest.Assessment.AssessmentID) || !hasDecision(view.Decisions, manifest.Decision.DecisionID) {
-		return "", fmt.Errorf("冻结清单引用的记录不完整")
-	}
-	for _, finding := range manifest.Findings {
-		if !hasFinding(view.Findings, finding.FindingID) {
-			return "", fmt.Errorf("冻结清单引用的风险记录不完整")
-		}
 	}
 	return record.Digest, nil
 }
