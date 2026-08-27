@@ -5,13 +5,20 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"sync"
 	"textilepermit/internal/domain"
 	"textilepermit/internal/store"
 )
 
-type Service struct{ store *store.Store }
+type Service struct {
+	store          *store.Store
+	readinessMu    sync.RWMutex
+	readinessCache map[string]Readiness
+}
 
-func New(s *store.Store) *Service { return &Service{store: s} }
+func New(s *store.Store) *Service {
+	return &Service{store: s, readinessCache: make(map[string]Readiness)}
+}
 
 func decodeResult[T any](raw json.RawMessage) (T, error) {
 	var v T

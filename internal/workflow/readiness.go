@@ -18,6 +18,13 @@ type Readiness struct {
 }
 
 func (s *Service) CheckReadiness(ctx context.Context, id, reviewer string) (Readiness, error) {
+	s.readinessMu.RLock()
+	cached, ok := s.readinessCache[id]
+	s.readinessMu.RUnlock()
+	if ok {
+		return cloneReadiness(cached), nil
+	}
+
 	v, e := s.store.Evidence(ctx, id)
 	if e != nil {
 		return Readiness{}, e
@@ -60,7 +67,16 @@ func (s *Service) CheckReadiness(ctx context.Context, id, reviewer string) (Read
 	for _, i := range items {
 		ready = ready && i.Passed
 	}
-	return Readiness{Ready: ready, Items: items}, nil
+	result := Readiness{Ready: ready, Items: items}
+	s.readinessMu.Lock()
+	s.readinessCache[id] = cloneReadiness(result)
+	s.readinessMu.Unlock()
+	return result, nil
+}
+
+func cloneReadiness(v Readiness) Readiness {
+	v.Items = append([]ReadinessItem(nil), v.Items...)
+	return v
 }
 
 type CaseSearchQuery struct {
