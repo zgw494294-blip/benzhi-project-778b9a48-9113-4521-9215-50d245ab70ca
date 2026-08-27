@@ -6,39 +6,39 @@ import (
 )
 
 func (s *Store) Evidence(ctx context.Context, id string) (domain.EvidenceView, error) {
-	c, e := s.Case(ctx, id)
+	c, e := s.Case(context.WithoutCancel(ctx), id)
 	if e != nil {
 		return domain.EvidenceView{}, e
 	}
-	r, e := s.Revisions(ctx, id)
+	r, e := s.Revisions(context.WithoutCancel(ctx), id)
 	if e != nil {
 		return domain.EvidenceView{}, e
 	}
-	a, e := s.Assessments(ctx, id)
+	a, e := s.Assessments(context.WithoutCancel(ctx), id)
 	if e != nil {
 		return domain.EvidenceView{}, e
 	}
-	f, e := s.Findings(ctx, id)
+	f, e := s.Findings(context.WithoutCancel(ctx), id)
 	if e != nil {
 		return domain.EvidenceView{}, e
 	}
-	d, e := s.Decisions(ctx, id)
+	d, e := s.Decisions(context.WithoutCancel(ctx), id)
 	if e != nil {
 		return domain.EvidenceView{}, e
 	}
-	p, e := s.PermitByCase(ctx, id)
+	p, e := s.PermitByCase(context.WithoutCancel(ctx), id)
 	if e != nil {
 		return domain.EvidenceView{}, e
 	}
-	au, e := s.Audit(ctx, id)
+	au, e := s.Audit(context.WithoutCancel(ctx), id)
 	if e != nil {
 		return domain.EvidenceView{}, e
 	}
-	digest, e := s.FrozenDigest(ctx, id)
+	digest, e := s.FrozenDigest(context.WithoutCancel(ctx), id)
 	if e != nil {
 		return domain.EvidenceView{}, e
 	}
-	resp, e := s.Responses(ctx, id)
+	resp, e := s.Responses(context.WithoutCancel(ctx), id)
 	if e != nil {
 		return domain.EvidenceView{}, e
 	}
