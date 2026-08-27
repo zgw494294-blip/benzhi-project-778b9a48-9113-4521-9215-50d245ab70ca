@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"sync"
 	"textilepermit/internal/domain"
 	"time"
 )
@@ -118,9 +119,32 @@ func (s *Store) Audit(ctx context.Context, id string) ([]domain.AuditEvent, erro
 	}
 	return out, rows.Err()
 }
+
+var permitByCodeQuery struct {
+	sync.Mutex
+	statement *sql.Stmt
+}
+
+func (s *Store) permitByCodeStatement(ctx context.Context) (*sql.Stmt, error) {
+	permitByCodeQuery.Lock()
+	defer permitByCodeQuery.Unlock()
+	if permitByCodeQuery.statement == nil {
+		statement, err := s.db.PrepareContext(ctx, "SELECT payload FROM permits WHERE verification_code=?")
+		if err != nil {
+			return nil, err
+		}
+		permitByCodeQuery.statement = statement
+	}
+	return permitByCodeQuery.statement, nil
+}
+
 func (s *Store) PermitByCode(ctx context.Context, code string) (domain.DisplayPermit, error) {
 	var raw string
-	e := s.db.QueryRowContext(ctx, "SELECT payload FROM permits WHERE verification_code=?", code).Scan(&raw)
+	statement, e := s.permitByCodeStatement(ctx)
+	if e != nil {
+		return domain.DisplayPermit{}, e
+	}
+	e = statement.QueryRowContext(ctx, code).Scan(&raw)
 	if errors.Is(e, sql.ErrNoRows) {
 		return domain.DisplayPermit{}, domain.ErrNotFound
 	}
