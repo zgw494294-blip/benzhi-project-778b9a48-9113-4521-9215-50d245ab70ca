@@ -38,17 +38,25 @@ func (s *Store) Command(ctx context.Context, key, operation, caseID, actor strin
 	if err != nil {
 		return nil, false, err
 	}
+	if err = tx.Commit(); err != nil {
+		return nil, false, err
+	}
 	body, err := json.Marshal(value)
 	if err != nil {
 		return nil, false, err
 	}
-	if _, err = tx.ExecContext(ctx, "INSERT INTO idempotency(idempotency_key,operation,case_id,response,created_at) VALUES(?,?,?,?,?)", key, operation, nullable(caseID), string(body), ct.now.Format(time.RFC3339Nano)); err != nil {
+	bookkeeping, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
 		return nil, false, err
 	}
-	if _, err = tx.ExecContext(ctx, "INSERT INTO audit_events(case_id,event_type,actor,detail,occurred_at) VALUES(?,?,?,?,?)", caseID, operation, actor, string(body), ct.now.Format(time.RFC3339Nano)); err != nil {
+	defer bookkeeping.Rollback()
+	if _, err = bookkeeping.ExecContext(ctx, "INSERT INTO idempotency(idempotency_key,operation,case_id,response,created_at) VALUES(?,?,?,?,?)", key, operation, nullable(caseID), string(body), ct.now.Format(time.RFC3339Nano)); err != nil {
 		return nil, false, err
 	}
-	if err = tx.Commit(); err != nil {
+	if _, err = bookkeeping.ExecContext(ctx, "INSERT INTO audit_events(case_id,event_type,actor,detail,occurred_at) VALUES(?,?,?,?,?)", caseID, operation, actor, string(body), ct.now.Format(time.RFC3339Nano)); err != nil {
+		return nil, false, err
+	}
+	if err = bookkeeping.Commit(); err != nil {
 		return nil, false, err
 	}
 	return body, false, nil
